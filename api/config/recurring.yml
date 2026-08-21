@@ -1,0 +1,19 @@
+development:
+  dispatch_outbox:
+    class: OutboxDispatchJob
+    queue: maintenance
+    schedule: every second
+  recover_stuck_purchases:
+    class: ReconcileStuckPurchasesJob
+    queue: maintenance
+    schedule: every 30 seconds
+
+production:
+  dispatch_outbox:
+    class: OutboxDispatchJob
+    queue: maintenance
+    schedule: every second
+  recover_stuck_purchases:
+    class: ReconcileStuckPurchasesJob
+    queue: maintenance
+    schedule: every 30 seconds

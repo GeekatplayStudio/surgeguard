@@ -1,0 +1,4 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+#
+# Tests in this suite create their own PurchaseRequest records explicitly (state like
+# idempotency_key, status, and timestamps matters per-test), so no shared fixtures here.

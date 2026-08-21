@@ -1,0 +1,31 @@
+# syntax=docker/dockerfile:1
+
+# Development/compose image. The sibling `Dockerfile` is the production
+# (Kamal/Thruster) build: it bakes the app in, runs as a non-root user and
+# boots with RAILS_ENV=production. This one keeps the source bind-mounted and
+# gems in a named volume so edits are live, and is used by docker-compose for
+# both the `api` (Puma) and `worker` (Solid Queue) services off the same image.
+
+ARG RUBY_VERSION=3.4.10
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+WORKDIR /rails
+
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+      build-essential curl git libpq-dev libvips libyaml-dev pkg-config postgresql-client && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle" \
+    RAILS_LOG_TO_STDOUT="1"
+
+# Install gems as their own layer so source edits don't invalidate the bundle.
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]

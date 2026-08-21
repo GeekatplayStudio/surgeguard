@@ -1,0 +1,115 @@
+# Local, containerized SurgeGuard stack. Each service here has a documented
+# AWS counterpart in docs/aws-architecture.md.
+#
+#   docker compose up --build
+#   dashboard -> http://localhost:5173   api -> http://localhost:3000
+#
+# `api` and `worker` deliberately run the *same* image with different commands,
+# mirroring the production split of one ECS service for Puma and a separately
+# autoscaled ECS service for Solid Queue workers.
+
+name: surgeguard
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: valkey/valkey:8
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    environment: &api_env
+      RAILS_ENV: development
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/surgeguard_api_development
+      QUEUE_DATABASE_URL: postgres://postgres:postgres@postgres:5432/surgeguard_api_queue_development
+      REDIS_URL: redis://redis:6379/0
+      CORS_ORIGINS: http://localhost:5173
+      RAILS_MAX_THREADS: "5"
+      # Knobs the loadtest scripts lean on; see loadtest/backlog-check.ts.
+      RATE_LIMIT_MAX: "200"
+      PAYMENT_LATENCY_MS: "250"
+      PAYMENT_FAILURE_RATE: "0"
+    # db:prepare creates/loads both the primary and the Solid Queue database.
+    command: >
+      bash -c "bin/rails db:prepare &&
+               rm -f tmp/pids/server.pid &&
+               bin/rails server -b 0.0.0.0 -p 3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api:/rails
+      - api-bundle:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/up || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  worker:
+    build:
+      context: ./api
+      dockerfile: Dockerfile.dev
+    environment: *api_env
+    # Solid Queue: dispatchers + the `transactions`/`maintenance` worker pools
+    # from config/queue.yml, plus the recurring jobs from config/recurring.yml
+    # (outbox dispatch every 1s, stuck-purchase reconcile every 30s).
+    command: ["bin/jobs", "start"]
+    volumes:
+      - ./api:/rails
+      - api-bundle:/usr/local/bundle
+    depends_on:
+      # Waits for `api` to have finished db:prepare before booting.
+      api:
+        condition: service_healthy
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile.dev
+    environment:
+      # Read by the browser, so it must be the host-published API port.
+      VITE_API_BASE: http://localhost:3000/api/v1
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./dashboard:/app
+      # Keep the image's node_modules; don't let the host directory shadow it.
+      - /app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:
+  api-bundle:

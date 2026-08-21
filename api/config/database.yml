@@ -1,0 +1,31 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  primary:
+    <<: *default
+    database: surgeguard_api_development
+  queue:
+    <<: *default
+    database: surgeguard_api_queue_development
+    migrations_paths: db/queue_migrate
+
+test:
+  primary:
+    <<: *default
+    database: surgeguard_api_test
+  queue:
+    <<: *default
+    database: surgeguard_api_queue_test
+    migrations_paths: db/queue_migrate
+
+production:
+  primary:
+    <<: *default
+    url: <%= ENV["DATABASE_URL"] %>
+  queue:
+    <<: *default
+    url: <%= ENV["QUEUE_DATABASE_URL"] %>
+    migrations_paths: db/queue_migrate

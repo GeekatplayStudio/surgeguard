@@ -1,0 +1,4 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+#
+# Tests in this suite create their own OutboxEvent records explicitly (state like
+# published_at and payload matters per-test), so no shared fixtures here.

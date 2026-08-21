@@ -1,0 +1,6 @@
+# Editor / tooling caches that are generated per-machine.
+.ruby-lsp/
+.DS_Store
+
+# Subproject-specific ignores live in api/.gitignore, dashboard/.gitignore and
+# loadtest/.gitignore; only cross-cutting entries belong here.
