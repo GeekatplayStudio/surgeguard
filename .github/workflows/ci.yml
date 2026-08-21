@@ -106,6 +106,9 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
+          # Solid Queue runs on its own database; without this it falls back to
+          # a local socket and db:test:prepare cannot reach the service container.
+          QUEUE_DATABASE_URL: postgres://postgres:postgres@localhost:5432
           REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
 
