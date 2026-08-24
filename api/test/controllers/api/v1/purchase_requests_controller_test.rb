@@ -19,6 +19,13 @@ module Api
         { purchase: { customer_ref: customer_ref, amount_cents: amount_cents } }
       end
 
+      test "allows the dashboard when Vite is opened through 127.0.0.1" do
+        get "/api/v1/purchase_requests", headers: { "Origin" => "http://127.0.0.1:5173" }
+
+        assert_response :success
+        assert_equal "http://127.0.0.1:5173", response.headers["Access-Control-Allow-Origin"]
+      end
+
       test "create requires an Idempotency-Key header" do
         post "/api/v1/purchase_requests", params: purchase_payload, as: :json
 

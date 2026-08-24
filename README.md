@@ -279,7 +279,7 @@ compose, and production except their values.
 | `DATABASE_URL` | local socket | Primary Postgres database. |
 | `QUEUE_DATABASE_URL` | local socket | Solid Queue's separate database. |
 | `REDIS_URL` | `redis://127.0.0.1:6379/0` | Rate limiter backend. |
-| `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed origins. |
+| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated allowed origins. |
 | `RAILS_MAX_THREADS` | `5` | Puma threads / DB pool size. |
 | `RATE_LIMIT_MAX` | `200` | Requests per IP per 10-second window. |
 | `PAYMENT_LATENCY_MS` | `250` | Simulated downstream latency. |

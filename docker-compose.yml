@@ -47,7 +47,7 @@ services:
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/surgeguard_api_development
       QUEUE_DATABASE_URL: postgres://postgres:postgres@postgres:5432/surgeguard_api_queue_development
       REDIS_URL: redis://redis:6379/0
-      CORS_ORIGINS: http://localhost:5173
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       RAILS_MAX_THREADS: "5"
       # Knobs the loadtest scripts lean on; see loadtest/backlog-check.ts.
       RATE_LIMIT_MAX: "200"
