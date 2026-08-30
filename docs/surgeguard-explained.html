@@ -1,0 +1,1498 @@
+<title>SurgeGuard Explained</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+  :root {
+    --ground: #f3f3f7;
+    --surface: #ffffff;
+    --surface-2: #eaeaf1;
+    --ink: #16161d;
+    --ink-2: #55556a;
+    --ink-3: #7c7c93;
+    --rule: #dcdce6;
+    --rule-strong: #c3c3d3;
+    --accent: #45327d;
+    --accent-2: #6c56b3;
+    --accent-soft: #ece7f8;
+    --ok: #0f6c56;
+    --warn: #96550a;
+    --info: #2a4fbf;
+    --bad: #a32b22;
+    --ok-soft: #e0f0ea;
+    --warn-soft: #f6ecdc;
+    --info-soft: #e3e9fa;
+    --bad-soft: #f7e3e1;
+
+    --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    --f-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --measure: 68ch;
+    --pad: clamp(1.1rem, 4vw, 2.5rem);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #121118;
+      --surface: #1a1922;
+      --surface-2: #23222e;
+      --ink: #e9e8ef;
+      --ink-2: #a9a7ba;
+      --ink-3: #86849a;
+      --rule: #2f2d3b;
+      --rule-strong: #433f55;
+      --accent: #b7a2f0;
+      --accent-2: #9b85dd;
+      --accent-soft: #241f36;
+      --ok: #5cc4a4;
+      --warn: #dda44a;
+      --info: #8fa8ff;
+      --bad: #ec8177;
+      --ok-soft: #172b27;
+      --warn-soft: #2c2417;
+      --info-soft: #1c2036;
+      --bad-soft: #30201f;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #121118;
+    --surface: #1a1922;
+    --surface-2: #23222e;
+    --ink: #e9e8ef;
+    --ink-2: #a9a7ba;
+    --ink-3: #86849a;
+    --rule: #2f2d3b;
+    --rule-strong: #433f55;
+    --accent: #b7a2f0;
+    --accent-2: #9b85dd;
+    --accent-soft: #241f36;
+    --ok: #5cc4a4;
+    --warn: #dda44a;
+    --info: #8fa8ff;
+    --bad: #ec8177;
+    --ok-soft: #172b27;
+    --warn-soft: #2c2417;
+    --info-soft: #1c2036;
+    --bad-soft: #30201f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- shell ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  @media (min-width: 1080px) {
+    .shell { grid-template-columns: 15.5rem 1fr; gap: 0; }
+  }
+
+  nav.rail { display: none; }
+
+  @media (min-width: 1080px) {
+    nav.rail {
+      display: block;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      max-height: 100vh;
+      overflow-y: auto;
+      padding: 3.2rem 1.6rem 3rem var(--pad);
+      border-right: 1px solid var(--rule);
+    }
+  }
+
+  .rail-title {
+    font-family: var(--f-mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 1rem;
+  }
+
+  .rail ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    counter-reset: rail;
+  }
+
+  .rail a {
+    display: grid;
+    grid-template-columns: 1.7rem 1fr;
+    gap: 0.2rem;
+    font-family: var(--f-display);
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--ink-2);
+    text-decoration: none;
+    padding: 0.18rem 0;
+    border-radius: 3px;
+  }
+
+  .rail li { counter-increment: rail; }
+  .rail a::before {
+    content: counter(rail, decimal-leading-zero);
+    font-family: var(--f-mono);
+    font-size: 0.68rem;
+    color: var(--ink-3);
+    padding-top: 0.12em;
+  }
+  .rail a:hover { color: var(--accent); }
+  .rail a:hover::before { color: var(--accent); }
+  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  main {
+    padding: 0 var(--pad) 6rem;
+    min-width: 0;
+  }
+
+  .col { max-width: var(--measure); }
+
+  /* ---------- masthead ---------- */
+
+  header.mast {
+    padding: 3.4rem 0 2.2rem;
+    border-bottom: 2px solid var(--ink);
+    margin-bottom: 2.6rem;
+  }
+
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.19em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 1.1rem;
+  }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.9rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    margin: 0 0 1rem;
+    text-wrap: balance;
+  }
+
+  .standfirst {
+    font-size: clamp(1.06rem, 2.2vw, 1.24rem);
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 58ch;
+    margin: 0 0 2rem;
+  }
+
+  .factbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 2.4rem;
+    row-gap: 1.1rem;
+    padding-top: 0.4rem;
+  }
+
+  .fact { display: flex; flex-direction: column; gap: 0.18rem; }
+  .fact dt {
+    font-family: var(--f-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .fact dd {
+    margin: 0;
+    font-family: var(--f-display);
+    font-size: 0.94rem;
+    font-weight: 600;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { padding-top: 2.9rem; scroll-margin-top: 1.5rem; }
+
+  .sec-head {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    align-items: baseline;
+    gap: 0.4rem;
+    border-top: 1px solid var(--rule-strong);
+    padding-top: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .sec-num {
+    font-family: var(--f-mono);
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+
+  h2 {
+    font-family: var(--f-display);
+    font-weight: 700;
+    font-size: clamp(1.55rem, 3.4vw, 2.05rem);
+    line-height: 1.12;
+    letter-spacing: -0.018em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  h3 {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1.12rem;
+    letter-spacing: -0.008em;
+    margin: 2.2rem 0 0.6rem;
+    text-wrap: balance;
+  }
+
+  h4 {
+    font-family: var(--f-mono);
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 0.5rem;
+  }
+
+  p { margin: 0 0 1.05rem; }
+  p.col, ul.col, ol.col { max-width: var(--measure); }
+
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+
+  strong { font-weight: 600; }
+
+  code {
+    font-family: var(--f-mono);
+    font-size: 0.85em;
+    background: var(--surface-2);
+    padding: 0.1em 0.34em;
+    border-radius: 3px;
+    word-break: break-word;
+  }
+
+  .lede {
+    font-size: 1.08rem;
+    color: var(--ink-2);
+    max-width: 60ch;
+  }
+
+  /* ---------- lists ---------- */
+
+  ul.plain { list-style: none; padding: 0; margin: 0 0 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  ul.plain > li {
+    padding-left: 1.15rem;
+    position: relative;
+  }
+  ul.plain > li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 0.42rem;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  /* ---------- step list ---------- */
+
+  ol.steps {
+    list-style: none;
+    counter-reset: step;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  ol.steps > li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    gap: 0.2rem;
+  }
+
+  ol.steps > li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--f-mono);
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--accent);
+    padding-top: 0.42em;
+  }
+
+  .step-body { min-width: 0; max-width: var(--measure); }
+  .step-body > :last-child { margin-bottom: 0; }
+
+  .step-title {
+    font-family: var(--f-display);
+    font-weight: 600;
+    font-size: 1.04rem;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.006em;
+  }
+
+  .where {
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    display: block;
+    margin: 0.45rem 0 0;
+  }
+  .where a { color: var(--ink-2); }
+
+  /* ---------- cards ---------- */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1.4rem 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 1.1rem 1.15rem;
+  }
+
+  .card h3 { margin: 0.35rem 0 0.45rem; font-size: 1rem; }
+  .card p { margin: 0; font-size: 0.93rem; color: var(--ink-2); line-height: 1.5; }
+
+  .tag {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.45rem;
+    border-radius: 3px;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .tag.bad { background: var(--bad-soft); color: var(--bad); }
+  .tag.warn { background: var(--warn-soft); color: var(--warn); }
+  .tag.ok { background: var(--ok-soft); color: var(--ok); }
+  .tag.info { background: var(--info-soft); color: var(--info); }
+
+  /* ---------- callout ---------- */
+
+  .callout {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 5px 5px 0;
+    padding: 1.05rem 1.2rem;
+    margin: 1.5rem 0;
+    max-width: var(--measure);
+  }
+  .callout > :last-child { margin-bottom: 0; }
+  .callout p { font-size: 0.95rem; }
+
+  /* ---------- code ---------- */
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    margin: 1.2rem 0;
+    font-family: var(--f-mono);
+    font-size: 0.79rem;
+    line-height: 1.65;
+    color: var(--ink);
+  }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .cm { color: var(--ink-3); }
+  .kw { color: var(--accent-2); font-weight: 600; }
+  .st { color: var(--ok); }
+
+  /* ---------- tables ---------- */
+
+  .tw { overflow-x: auto; margin: 1.4rem 0; border: 1px solid var(--rule); border-radius: 5px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; min-width: 520px; }
+  th, td { text-align: left; padding: 0.68rem 0.85rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th {
+    font-family: var(--f-mono);
+    font-size: 0.64rem;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono, th.mono { font-family: var(--f-mono); font-size: 0.79rem; font-variant-numeric: tabular-nums; }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  /* ---------- diagram ---------- */
+
+  figure { margin: 1.8rem 0; }
+  figure svg { display: block; width: 100%; height: auto; }
+  .figframe {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 1.2rem;
+    overflow-x: auto;
+  }
+  figcaption {
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    margin-top: 0.7rem;
+    line-height: 1.5;
+    max-width: 62ch;
+  }
+
+  /* ---------- gap list ---------- */
+
+  .gap {
+    border-top: 1px solid var(--rule);
+    padding: 1.1rem 0;
+    max-width: var(--measure);
+  }
+  .gap:first-of-type { border-top: 1px solid var(--rule-strong); }
+  .gap-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .gap-head h3 { margin: 0; font-size: 1rem; }
+  .gap p { margin: 0 0 0.5rem; font-size: 0.95rem; color: var(--ink-2); }
+  .gap p:last-child { margin-bottom: 0; }
+  .why { font-family: var(--f-mono); font-size: 0.74rem; color: var(--ink-3); }
+
+  /* ---------- closing ---------- */
+
+  .closing {
+    background: var(--surface);
+    border: 1px solid var(--rule-strong);
+    border-radius: 6px;
+    padding: 1.6rem 1.5rem;
+    margin-top: 2rem;
+    max-width: var(--measure);
+  }
+  .closing h3 { margin-top: 0; }
+  .closing ol { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--f-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    max-width: var(--measure);
+    line-height: 1.7;
+  }
+</style>
+
+<div class="shell">
+
+<nav class="rail" aria-label="Contents">
+  <p class="rail-title">Contents</p>
+  <ol>
+    <li><a href="#what">What it is</a></li>
+    <li><a href="#problem">The problem</a></li>
+    <li><a href="#rule">The one design rule</a></li>
+    <li><a href="#flow">Life of a request</a></li>
+    <li><a href="#data">The data model</a></li>
+    <li><a href="#guarantees">Guarantees &amp; mechanisms</a></li>
+    <li><a href="#built">How it was built</a></li>
+    <li><a href="#run">Running it</a></li>
+    <li><a href="#tested">How it is tested</a></li>
+    <li><a href="#benefits">What you get</a></li>
+    <li><a href="#gaps">What it does not solve</a></li>
+    <li><a href="#next">If this went live</a></li>
+    <li><a href="#pitch">The two-minute version</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="mast">
+  <p class="eyebrow">System walkthrough</p>
+  <h1>SurgeGuard</h1>
+  <p class="standfirst">
+    A purchase-intake system built for traffic that arrives in bursts. It accepts
+    money-moving requests without ever making the caller wait on a payment
+    provider, and it is designed so that a surge produces a <em>queue</em>
+    rather than an outage, a double charge, or lost work.
+  </p>
+  <dl class="factbar">
+    <div class="fact"><dt>API</dt><dd>Rails 8.1 · Ruby 3.4</dd></div>
+    <div class="fact"><dt>Queue</dt><dd>Solid Queue on Postgres</dd></div>
+    <div class="fact"><dt>Dashboard</dt><dd>React 19 · Vite · TS</dd></div>
+    <div class="fact"><dt>Load tools</dt><dd>TypeScript / tsx</dd></div>
+    <div class="fact"><dt>Shape</dt><dd>Monorepo, 3 subprojects</dd></div>
+  </dl>
+</header>
+
+<!-- 1 -->
+<section id="what">
+  <div class="sec-head"><span class="sec-num">01</span><h2>What the system actually does</h2></div>
+
+  <p class="col lede">
+    A client posts a purchase. SurgeGuard writes it down, answers
+    <code>202 Accepted</code> immediately, and charges it later on its own
+    schedule. Everything else in the system exists to make those three moves safe.
+  </p>
+
+  <p class="col">
+    Concretely, there are four moving parts. An <strong>HTTP API</strong> takes
+    purchase requests and refuses to do any expensive work inline. A
+    <strong>background worker</strong> picks that work up and runs it against a
+    simulated payment provider at a strictly bounded concurrency. A
+    <strong>reconciler</strong> sweeps up anything a crashed worker abandoned. An
+    <strong>operations dashboard</strong> shows the whole thing moving in real
+    time, so the behaviour under load is something you watch rather than something
+    you take on trust.
+  </p>
+
+  <p class="col">
+    The payment provider is simulated on purpose — a configurable sleep plus a
+    configurable failure rate. The interesting engineering here is not the
+    integration with a card network; it is everything around it: what happens when
+    500 requests land at once, when the client retries a request whose response it
+    never saw, and when a worker is killed halfway through a charge.
+  </p>
+</section>
+
+<!-- 2 -->
+<section id="problem">
+  <div class="sec-head"><span class="sec-num">02</span><h2>The problem it solves</h2></div>
+
+  <p class="col">
+    Start with the naive version: the endpoint calls the payment provider inline
+    and returns <code>201 Created</code> when the charge succeeds. It is the
+    obvious design, and under a surge it fails four different ways at once.
+  </p>
+
+  <div class="cards">
+    <div class="card">
+      <span class="tag bad">Failure 1</span>
+      <h3>Unbounded downstream load</h3>
+      <p>500 concurrent HTTP requests become 500 concurrent calls to the payment
+      provider. It rate-limits you, or it falls over, and now the outage is
+      shared.</p>
+    </div>
+    <div class="card">
+      <span class="tag bad">Failure 2</span>
+      <h3>Lost work</h3>
+      <p>The request thread dies mid-flight — deploy, OOM, timeout. The customer
+      saw a spinner or a success; the purchase simply evaporated. Nothing on disk
+      knows it ever existed.</p>
+    </div>
+    <div class="card">
+      <span class="tag bad">Failure 3</span>
+      <h3>Duplicate charges</h3>
+      <p>The client never received the response, so it retries. It gets charged
+      twice. This is the failure that costs real money and real trust.</p>
+    </div>
+    <div class="card">
+      <span class="tag bad">Failure 4</span>
+      <h3>The enqueue gap</h3>
+      <p>Bolting on a job queue introduces a <em>new</em> failure: the window
+      between "row committed" and "job enqueued". Crash in that window and the
+      database says accepted while nothing will ever process it.</p>
+    </div>
+  </div>
+
+  <p class="col">
+    Retries alone do not fix any of these — retries make failure 3 worse. A job
+    queue alone fixes failure 1 and creates failure 4. The design below closes all
+    four, and it does it with database primitives rather than application
+    bookkeeping, which is what makes the guarantees survive running many
+    processes on many machines.
+  </p>
+</section>
+
+<!-- 3 -->
+<section id="rule">
+  <div class="sec-head"><span class="sec-num">03</span><h2>The one design rule</h2></div>
+
+  <div class="callout">
+    <p><strong>Accepting work and doing work are separate concerns with separate
+    capacity.</strong></p>
+    <p>Intake is cheap, non-blocking, and scales with <em>traffic</em>. Processing
+    is expensive, strictly bounded, and scales with <em>backlog</em>. Between them
+    sits a transactional outbox, which is the piece that makes a surge produce a
+    queue instead of an outage.</p>
+  </div>
+
+  <p class="col">
+    Every other decision in the repository is downstream of that sentence. Intake
+    latency is one database write, whatever is happening behind it. Downstream
+    concurrency is a number in a config file — <code>5</code> threads per worker
+    process — not a function of how many people are hitting the site. The backlog
+    is a queryable table, so "are we keeping up?" is a SQL question with a real
+    answer rather than a guess.
+  </p>
+</section>
+
+<!-- 4 -->
+<section id="flow">
+  <div class="sec-head"><span class="sec-num">04</span><h2>Life of a request, step by step</h2></div>
+
+  <p class="col lede">
+    Follow one purchase from the client's <code>POST</code> to a
+    <code>processed</code> row. This is the sequence to walk someone through if
+    you only have time for one thing.
+  </p>
+
+  <figure>
+    <div class="figframe">
+      <svg viewBox="0 0 760 470" role="img" aria-labelledby="flowtitle flowdesc" xmlns="http://www.w3.org/2000/svg">
+        <title id="flowtitle">SurgeGuard request lifecycle</title>
+        <desc id="flowdesc">A POST enters a single database transaction that writes both a purchase row and an outbox event, then returns 202 Accepted. A dispatcher claims the outbox event with FOR UPDATE SKIP LOCKED and enqueues a processing job, which runs in a bounded worker pool. A reconciler redrives purchases abandoned mid-processing.</desc>
+
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--rule-strong)"/>
+          </marker>
+          <marker id="ar-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)"/>
+          </marker>
+        </defs>
+
+        <g font-family="IBM Plex Mono, monospace" font-size="11">
+
+          <!-- client -->
+          <rect x="252" y="8" width="256" height="34" rx="4" fill="var(--surface-2)" stroke="var(--rule-strong)"/>
+          <text x="380" y="29" text-anchor="middle" fill="var(--ink)" font-size="11.5">POST /api/v1/purchase_requests</text>
+          <text x="380" y="58" text-anchor="middle" fill="var(--ink-3)" font-size="10">Idempotency-Key: 550e8400-…</text>
+
+          <line x1="380" y1="66" x2="380" y2="88" stroke="var(--rule-strong)" stroke-width="1.4" marker-end="url(#ar)"/>
+
+          <!-- transaction box -->
+          <rect x="152" y="92" width="456" height="94" rx="5" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+          <text x="172" y="114" fill="var(--accent)" font-size="10" letter-spacing="1.4">ONE DATABASE TRANSACTION</text>
+          <rect x="172" y="124" width="200" height="44" rx="3" fill="var(--surface)" stroke="var(--rule-strong)"/>
+          <text x="272" y="142" text-anchor="middle" fill="var(--ink)">purchase_requests</text>
+          <text x="272" y="158" text-anchor="middle" fill="var(--ink-3)" font-size="10">status: queued</text>
+          <rect x="388" y="124" width="200" height="44" rx="3" fill="var(--surface)" stroke="var(--rule-strong)"/>
+          <text x="488" y="142" text-anchor="middle" fill="var(--ink)">outbox_events</text>
+          <text x="488" y="158" text-anchor="middle" fill="var(--ink-3)" font-size="10">purchase.created</text>
+
+          <!-- 202 branch -->
+          <path d="M 152 139 L 92 139 L 92 44" fill="none" stroke="var(--ok)" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="86" y="112" text-anchor="end" fill="var(--ok)" font-size="10.5">202</text>
+          <text x="86" y="126" text-anchor="end" fill="var(--ok)" font-size="10.5">Accepted</text>
+          <text x="86" y="80" text-anchor="end" fill="var(--ink-3)" font-size="9.5">never waits on</text>
+          <text x="86" y="93" text-anchor="end" fill="var(--ink-3)" font-size="9.5">the provider</text>
+
+          <line x1="380" y1="186" x2="380" y2="212" stroke="var(--rule-strong)" stroke-width="1.4" marker-end="url(#ar)"/>
+
+          <!-- dispatcher -->
+          <rect x="192" y="216" width="376" height="58" rx="5" fill="var(--surface)" stroke="var(--rule-strong)"/>
+          <text x="380" y="238" text-anchor="middle" fill="var(--ink)" font-size="11.5">OutboxDispatchJob · every 1s</text>
+          <text x="380" y="256" text-anchor="middle" fill="var(--ink-3)" font-size="10">SELECT … FOR UPDATE SKIP LOCKED</text>
+
+          <line x1="380" y1="274" x2="380" y2="300" stroke="var(--rule-strong)" stroke-width="1.4" marker-end="url(#ar)"/>
+
+          <!-- processing -->
+          <rect x="192" y="304" width="376" height="76" rx="5" fill="var(--surface)" stroke="var(--rule-strong)"/>
+          <text x="380" y="326" text-anchor="middle" fill="var(--ink)" font-size="11.5">ProcessPurchaseJob · 5 threads per worker</text>
+          <text x="380" y="344" text-anchor="middle" fill="var(--ink-3)" font-size="10">serialized per purchase_request_id</text>
+          <text x="380" y="366" text-anchor="middle" fill="var(--ink-2)" font-size="10.5">queued → processing → processed</text>
+
+          <!-- retry loop -->
+          <path d="M 568 342 L 632 342 L 632 250 L 568 250" fill="none" stroke="var(--warn)" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+          <text x="640" y="292" fill="var(--warn)" font-size="9.5">failure →</text>
+          <text x="640" y="305" fill="var(--warn)" font-size="9.5">back to queued</text>
+
+          <line x1="380" y1="380" x2="380" y2="404" stroke="var(--rule-strong)" stroke-width="1.4" marker-end="url(#ar)"/>
+
+          <!-- reconcile -->
+          <rect x="192" y="408" width="376" height="54" rx="5" fill="var(--surface)" stroke="var(--accent)" stroke-dasharray="5 3"/>
+          <text x="380" y="430" text-anchor="middle" fill="var(--ink)" font-size="11.5">ReconcileStuckPurchasesJob · every 30s</text>
+          <text x="380" y="448" text-anchor="middle" fill="var(--ink-3)" font-size="10">redrives work abandoned mid-flight</text>
+
+          <path d="M 192 435 L 128 435 L 128 245 L 192 245" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="5 3" marker-end="url(#ar-a)"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption>The green branch is the client's entire experience: a database
+    write and a 202. Everything below the transaction box happens on the
+    system's own schedule, at the system's own concurrency.</figcaption>
+  </figure>
+
+  <ol class="steps">
+    <li>
+      <div class="step-body">
+        <p class="step-title">The client sends an idempotency key, or gets rejected</p>
+        <p>The controller requires an <code>Idempotency-Key</code> header and
+        answers <code>400</code> without it. This is deliberately not optional:
+        the entire retry-safety story depends on the client naming its request,
+        and a system that lets callers skip that has no way to tell a retry from a
+        second purchase.</p>
+        <span class="where">api/app/controllers/api/v1/purchase_requests_controller.rb</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">A per-IP token bucket decides whether to even look at the body</p>
+        <p>A Redis <code>INCR</code>-plus-<code>EXPIRE</code> Lua script counts
+        requests per IP in a 10-second window, defaulting to 200. Over the limit
+        is <code>429</code>. If Redis is unreachable, the limiter <em>fails
+        open</em> and lets the request through — losing rate limiting is strictly
+        better than losing intake.</p>
+        <span class="where">api/services/request_rate_limiter.rb</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">One transaction writes the purchase and its outbox event</p>
+        <p>This is the load-bearing step. The <code>purchase_requests</code> row
+        (status <code>queued</code>) and an <code>outbox_events</code> row
+        (<code>purchase.created</code>) are committed together, so there is no
+        instant in time where one exists and the other does not. Crash before
+        commit and neither exists; crash after commit and the work is durably
+        recorded <em>and</em> durably scheduled. That closes the enqueue gap.</p>
+<pre><code><span class="kw">PurchaseRequest</span>.transaction <span class="kw">do</span>
+  purchase = <span class="kw">PurchaseRequest</span>.create!(
+    idempotency_key: idempotency_key,
+    status: <span class="st">:queued</span>, …)
+
+  <span class="kw">OutboxEvent</span>.create!(
+    event_type: <span class="st">"purchase.created"</span>,
+    aggregate_id: purchase.id, …)
+<span class="kw">end</span></code></pre>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Duplicates are adjudicated by the database, not by a check</p>
+        <p>A unique index on <code>idempotency_key</code> raises
+        <code>ActiveRecord::RecordNotUnique</code>, which the controller rescues.
+        If the payload matches the stored row, it returns the <em>original</em>
+        purchase with <code>200 OK</code> — retry forever, safely. If the payload
+        differs, that is a client bug and it gets <code>409 Conflict</code>.</p>
+        <p>There is deliberately <strong>no</strong> Rails uniqueness validation
+        on the model. That would be a check-then-insert race: two simultaneous
+        requests both read "no such key", both pass validation, and one blows up
+        anyway — with the graceful duplicate handling never reached. The database
+        is the only thing that can adjudicate simultaneity, so it does.</p>
+        <span class="where">api/app/models/purchase_request.rb — the comment above the validations says exactly this</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">202 Accepted returns; no provider was contacted</p>
+        <p>Intake latency is one insert pair, regardless of how backed up
+        processing is. That decoupling is the whole point: under a surge the
+        response time of the endpoint does not move.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">A dispatcher claims outbox events once a second</p>
+        <p><code>OutboxDispatchJob</code> selects up to 100 pending events with
+        <code>FOR UPDATE SKIP LOCKED</code> and turns each into a
+        <code>ProcessPurchaseJob</code>, then stamps <code>published_at</code>.
+        Because the claim is a row lock that competing dispatchers <em>skip</em>
+        rather than block on, any number of dispatcher processes can run
+        concurrently and no two will ever claim the same event. That is what makes
+        the worker tier horizontally scalable.</p>
+        <span class="where">api/jobs/outbox_dispatch_job.rb · schedule in api/config/recurring.yml</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">The bounded worker pool does the expensive part</p>
+        <p><code>ProcessPurchaseJob</code> runs on the <code>transactions</code>
+        queue with 5 threads per worker process. It moves the purchase
+        <code>queued → processing → processed</code>, stamping
+        <code>processing_started_at</code>, <code>attempt_count</code> and
+        <code>processed_at</code> along the way. Two guards make redelivery
+        harmless: <code>limits_concurrency(to: 1, key: purchase_request_id)</code>
+        means the same purchase is never worked twice at the same moment, and an
+        early <code>return if purchase.processed?</code> makes a duplicate
+        delivery a no-op.</p>
+        <p>Total downstream concurrency is therefore
+        <code>5 × worker_count</code> — a number you choose, not a number the
+        traffic chooses. Everything else waits in <code>queued</code>.</p>
+        <span class="where">api/jobs/process_purchase_job.rb · pools in api/config/queue.yml</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Failures are recorded, reverted, and retried with backoff</p>
+        <p>On exception the job writes <code>last_error</code>, puts the purchase
+        back to <code>queued</code>, and re-raises so Solid Queue's
+        <code>retry_on … :polynomially_longer, attempts: 5</code> takes over. The
+        row always tells you what went wrong and how many times it has been
+        tried.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">The reconciler redrives whatever was abandoned</p>
+        <p>If a worker is killed while a purchase is <code>processing</code>,
+        nothing would ever touch that row again — the job is gone and the status
+        is not <code>queued</code>. Every 30 seconds
+        <code>ReconcileStuckPurchasesJob</code> finds purchases that have been
+        <code>processing</code> for more than 2 minutes, returns them to
+        <code>queued</code>, and writes a fresh outbox event to drive them again.
+        This is the layer that covers deploys, scale-ins, spot interruptions and
+        OOM kills.</p>
+        <span class="where">api/jobs/reconcile_stuck_purchases_job.rb</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Operators watch it through /metrics</p>
+        <p><code>GET /api/v1/metrics</code> returns purchase counts by status,
+        pending outbox depth, and the <em>age</em> of the oldest unpublished
+        event. Age is the honest health signal — a small stalled backlog is far
+        worse than a large one that is draining, and a count alone cannot tell
+        those apart.</p>
+        <span class="where">api/app/controllers/api/v1/metrics_controller.rb</span>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- 5 -->
+<section id="data">
+  <div class="sec-head"><span class="sec-num">05</span><h2>The data model</h2></div>
+
+  <p class="col">
+    Two tables in the primary database, plus Solid Queue's own tables in a
+    <em>separate</em> database so queue churn does not compete with transactional
+    data for the same IO.
+  </p>
+
+  <h3>purchase_requests</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="mono">Column</th><th class="mono">Type</th><th>Why it is there</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">idempotency_key</td><td class="mono">string</td><td><strong>Unique index.</strong> The entire retry-safety guarantee lives on this one constraint.</td></tr>
+        <tr><td class="mono">customer_ref</td><td class="mono">string</td><td>Who the purchase belongs to; compared on duplicate keys to detect a 409.</td></tr>
+        <tr><td class="mono">amount_cents</td><td class="mono">integer</td><td>Integer cents, never floats. Check constraint <code>amount_cents &gt; 0</code> at the database level.</td></tr>
+        <tr><td class="mono">status</td><td class="mono">enum</td><td><code>queued · processing · processed · failed</code>, indexed because every metric groups on it.</td></tr>
+        <tr><td class="mono">attempt_count</td><td class="mono">integer</td><td>How many times processing has been tried — visible in the dashboard.</td></tr>
+        <tr><td class="mono">processing_started_at</td><td class="mono">datetime</td><td>The clock the reconciler reads to decide a row is stuck.</td></tr>
+        <tr><td class="mono">processed_at</td><td class="mono">datetime</td><td>Completion timestamp.</td></tr>
+        <tr><td class="mono">last_error</td><td class="mono">text</td><td>The failure message, kept on the row so debugging does not require log archaeology.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>outbox_events</h3>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="mono">Column</th><th class="mono">Type</th><th>Why it is there</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">event_type</td><td class="mono">string</td><td>Currently only <code>purchase.created</code>; the dispatcher switches on it.</td></tr>
+        <tr><td class="mono">aggregate_type / aggregate_id</td><td class="mono">string / bigint</td><td>What the event is about. Indexed together.</td></tr>
+        <tr><td class="mono">payload</td><td class="mono">jsonb</td><td>Event body. The reconciler marks its redrives with <code>recovery: true</code>.</td></tr>
+        <tr><td class="mono">published_at</td><td class="mono">datetime</td><td><strong>Null means pending.</strong> Indexed — this is the column the dispatcher scans every second.</td></tr>
+        <tr><td class="mono">attempt_count / last_error</td><td class="mono">integer / text</td><td>Publish attempts and the last publish failure.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="guarantees">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Guarantees, and what actually enforces them</h2></div>
+
+  <p class="col">
+    The reason to read this table rather than the prose: each property is held up
+    by a database primitive, not by application bookkeeping. That is what makes it
+    survive many processes, many machines, and a deploy in the middle.
+  </p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Guarantee</th><th>Mechanism</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>One idempotency key creates <strong>exactly one</strong> purchase, however many concurrent requests carry it</td>
+          <td>Unique index + <code>rescue RecordNotUnique</code> returning the existing record. Not a model validation, which would be a check-then-insert race.</td>
+        </tr>
+        <tr>
+          <td>Reusing a key with a <strong>different payload</strong> is rejected, not silently misresolved</td>
+          <td>The duplicate handler compares <code>customer_ref</code> and <code>amount_cents</code> and returns <code>409</code> on mismatch.</td>
+        </tr>
+        <tr>
+          <td>Accepted work is <strong>never lost</strong> between the HTTP response and the job</td>
+          <td>Purchase row and outbox event share one transaction. No window exists where one is true and the other is not.</td>
+        </tr>
+        <tr>
+          <td>Concurrent dispatchers <strong>never double-claim</strong> an event</td>
+          <td><code>SELECT … FOR UPDATE SKIP LOCKED</code>.</td>
+        </tr>
+        <tr>
+          <td>A purchase is <strong>never processed twice concurrently</strong>, and a redelivery never re-runs a finished one</td>
+          <td><code>limits_concurrency(to: 1, key: purchase_request_id)</code> plus an early <code>return if purchase.processed?</code>.</td>
+        </tr>
+        <tr>
+          <td>A surge produces a <strong>bounded backlog</strong>, not unbounded downstream load</td>
+          <td>Downstream concurrency is exactly <code>transactions</code> pool threads × worker count. Intake is unaffected.</td>
+        </tr>
+        <tr>
+          <td>Work abandoned mid-flight is <strong>recovered automatically</strong></td>
+          <td><code>ReconcileStuckPurchasesJob</code> on a 30-second recurring schedule.</td>
+        </tr>
+        <tr>
+          <td>One client cannot monopolise intake</td>
+          <td>Redis token bucket per IP, failing open when Redis is down.</td>
+        </tr>
+        <tr>
+          <td>Listing purchases cannot be made to return an unbounded result set</td>
+          <td><code>per_page</code> clamped server-side to 200 regardless of what the caller asks for.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="built">
+  <div class="sec-head"><span class="sec-num">07</span><h2>How it was built, in order</h2></div>
+
+  <p class="col lede">
+    This is the build sequence, and the order matters — each step exists because
+    the previous one left something unsafe. If you are explaining the project to
+    someone, this section is the narrative.
+  </p>
+
+  <ol class="steps">
+    <li>
+      <div class="step-body">
+        <p class="step-title">Scaffold the API in API-only mode</p>
+        <p>Rails 8.1, Ruby 3.4, PostgreSQL, <code>--api</code>. Rails 8's default
+        stack is already the right one here: Solid Queue for jobs, Solid Cache,
+        Thruster and Puma in the production image, Kamal for deploys, Brakeman and
+        RuboCop wired into <code>bin/ci</code>. Nothing was replaced.</p>
+        <span class="where">api/ · Gemfile adds only redis and rack-cors on top of the default stack</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Write the two migrations before any application code</p>
+        <p>The constraints are the design, so they came first: the unique index on
+        <code>idempotency_key</code>, the <code>amount_cents &gt; 0</code> check
+        constraint, the status index, and the <code>published_at</code> index the
+        dispatcher scans. Application code was written afterwards to fit them.</p>
+        <span class="where">api/db/migrate/20260820181858_create_purchase_requests.rb · …182455_create_outbox_events.rb</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Model the aggregate — and deliberately leave uniqueness out</p>
+        <p><code>PurchaseRequest</code> gets a status enum, presence and
+        numericality validations, and an <code>amount_dollars</code> helper. It
+        does <em>not</em> get <code>validates :idempotency_key, uniqueness:
+        true</code>, and there is a comment on the model explaining why, because
+        the omission looks like an oversight to every reviewer until it is
+        explained.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Build intake around the transaction, then the rescue</p>
+        <p>The controller's <code>create</code> is one transaction writing both
+        rows, a <code>202</code>, and three rescues: <code>RecordNotUnique</code>
+        for idempotent replay, <code>RecordInvalid</code> for
+        <code>422</code>, and a missing header for <code>400</code>. The
+        duplicate handler is where <code>200</code> versus <code>409</code> is
+        decided.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Add the outbox dispatcher with SKIP LOCKED</p>
+        <p>Batches of 100, ordered by id, claimed inside a transaction. A publish
+        failure is caught per event: <code>attempt_count</code> and
+        <code>last_error</code> are recorded and the event is left pending, so one
+        bad event cannot abort the batch around it.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Add the processing job with its two idempotency guards</p>
+        <p>Per-purchase concurrency limit, the processed-already short circuit,
+        polynomial backoff over 5 attempts, and the simulated provider behind two
+        environment variables — <code>PAYMENT_LATENCY_MS</code> and
+        <code>PAYMENT_FAILURE_RATE</code> — so flaky-downstream behaviour can be
+        demonstrated on demand rather than described.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Add the reconciler for the crash case</p>
+        <p>Two minutes in <code>processing</code> is treated as abandoned. The row
+        goes back to <code>queued</code> with an explanatory
+        <code>last_error</code>, and a new outbox event redrives it — reusing the
+        existing dispatch path rather than enqueuing directly, so recovery flows
+        through exactly the same machinery as first delivery.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Turn the concurrency bound into configuration</p>
+        <p><code>queue.yml</code> declares two pools: <code>transactions</code>
+        with 5 threads and fast 0.1s polling, and <code>maintenance</code> with 2.
+        <code>recurring.yml</code> schedules outbox dispatch every second and
+        reconciliation every 30. Solid Queue gets its own database via
+        <code>QUEUE_DATABASE_URL</code>.</p>
+        <p>Splitting the pools matters: maintenance work must not be starved by a
+        transactions backlog, or the dispatcher stops feeding the very queue that
+        is backed up.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Add the rate limiter as a Redis Lua script</p>
+        <p><code>INCR</code> plus a conditional <code>EXPIRE</code> in one atomic
+        script, so the window cannot leak on a race. The rescue around
+        <code>Redis::BaseError</code> returning <code>true</code> is the
+        deliberate fail-open decision.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Expose the operator surface</p>
+        <p><code>/api/v1/metrics</code> for the gauges, a paginated
+        <code>index</code> with a server-side hard cap, and Rails' built-in
+        <code>/up</code> as the container and load-balancer probe. CORS origins
+        come from an environment variable so the same build works locally, in
+        compose, and behind CloudFront.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Promote jobs and services out of app/</p>
+        <p><code>api/jobs/</code> and <code>api/services/</code> sit at the top
+        level and are added to the autoload paths in
+        <code>config/application.rb</code>. These three jobs <em>are</em> the
+        system; burying them under <code>app/</code> alongside generated
+        boilerplate would have hidden the substance of the design.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Write the tests as named scenarios</p>
+        <p>Nine behaviours were specified up front and the tests are labelled with
+        them — the idempotency storm, conflicting key reuse, retry safety, durable
+        failure recording, stuck-record reconciliation, concurrent dispatch,
+        bounded backlog, bounded pagination, and the end-to-end lifecycle. The
+        test names read as claims about the system, not as descriptions of
+        methods.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Build the dashboard as a demonstration device</p>
+        <p>React 19 + Vite + TypeScript, polling <code>/metrics</code> and the
+        purchase list once a second. The idempotency key is an
+        <strong>editable field</strong> — that is the point of the UI, not a debug
+        affordance. Resubmit the same key and watch the original record come back;
+        change the amount and watch a <code>409</code>. The table pages with
+        "Load more" so it stays bounded no matter how many purchases exist.</p>
+        <span class="where">dashboard/src/App.tsx · api.ts · types.ts</span>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Write load scripts, because concurrency claims need evidence</p>
+        <p>Three TypeScript scripts that drive a running stack:
+        <code>load-test.ts</code> for sustained throughput,
+        <code>idempotency-storm.ts</code> which fires N simultaneous requests
+        under one key and then verifies exactly one purchase exists, and
+        <code>backlog-check.ts</code> which bursts a batch and polls
+        <code>/metrics</code> to show <code>processing</code> pinned at the pool
+        size while <code>queued</code> absorbs the surge.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Containerise the whole stack, with the split that production has</p>
+        <p><code>docker-compose.yml</code> brings up Postgres, Valkey, the API, a
+        worker, and the dashboard. <code>api</code> and <code>worker</code> run the
+        <em>same image</em> with different commands, mirroring the production split
+        of one service for Puma and a separately scaled service for the queue.</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Consolidate into one monorepo with one CI pipeline</p>
+        <p>The API originally carried its own nested git repository; it was
+        collapsed so a single <code>.github/workflows/ci.yml</code> covers all
+        three subprojects. Five jobs: Ruby security scan, RuboCop, Rails tests
+        against real Postgres and Valkey service containers, the dashboard
+        (format, oxlint, ESLint, typecheck, build, Vitest), and the load scripts
+        (format, typecheck).</p>
+      </div>
+    </li>
+    <li>
+      <div class="step-body">
+        <p class="step-title">Write the AWS mapping instead of provisioning AWS</p>
+        <p><code>docs/aws-architecture.md</code> maps every compose service onto
+        CloudFront/S3, ALB, ECS Fargate, RDS, ElastiCache and CloudWatch; names
+        which metric scales which service; and is explicit that the move needs
+        <em>no application code changes</em>, because the guarantees are Postgres
+        primitives rather than in-process state. It also names what does need
+        adapting — chiefly that recurring jobs must run in exactly one place.</p>
+      </div>
+    </li>
+  </ol>
+</section>
+
+<!-- 8 -->
+<section id="run">
+  <div class="sec-head"><span class="sec-num">08</span><h2>Running it</h2></div>
+
+  <h4>Everything at once</h4>
+<pre><code>docker compose up --build
+<span class="cm"># dashboard → http://localhost:5173   api → http://localhost:3000</span></code></pre>
+
+  <h4>Natively — needs Ruby 3.4, Node 22, PostgreSQL, Redis</h4>
+<pre><code><span class="cm"># terminal 1 — API</span>
+cd api &amp;&amp; bundle install &amp;&amp; bin/rails db:prepare &amp;&amp; bin/rails server
+
+<span class="cm"># terminal 2 — worker. Nothing is processed without this.</span>
+cd api &amp;&amp; bin/jobs start
+
+<span class="cm"># terminal 3 — dashboard</span>
+cd dashboard &amp;&amp; npm install &amp;&amp; npm run dev</code></pre>
+
+  <div class="callout">
+    <p><strong>The worker is not optional.</strong> Without <code>bin/jobs
+    start</code>, purchases are accepted and durably stored but sit in
+    <code>queued</code> forever — both dispatch and processing run through Solid
+    Queue. This is the first thing to check when a demo looks broken.</p>
+  </div>
+
+  <h4>Proving the claims</h4>
+<pre><code>cd loadtest
+npx tsx load-test.ts 500 50          <span class="cm"># 500 requests, 50 concurrent</span>
+npx tsx idempotency-storm.ts 100     <span class="cm"># 100 requests, one shared key</span>
+npx tsx backlog-check.ts 300 10      <span class="cm"># 300-request burst, expect processing ≤ 10</span></code></pre>
+
+  <p class="col">
+    <code>backlog-check.ts</code> reports rate-limited requests separately —
+    bursting past <code>RATE_LIMIT_MAX</code> trips the limiter, which is correct
+    behaviour rather than a failed run. Raise the limit to burst harder.
+  </p>
+
+  <h4>The knobs worth knowing</h4>
+  <div class="tw">
+    <table>
+      <thead><tr><th class="mono">Variable</th><th class="mono">Default</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">RATE_LIMIT_MAX</td><td class="mono num">200</td><td>Requests per IP per 10-second window.</td></tr>
+        <tr><td class="mono">PAYMENT_LATENCY_MS</td><td class="mono num">250</td><td>Simulated downstream latency — raise it to make the backlog visible.</td></tr>
+        <tr><td class="mono">PAYMENT_FAILURE_RATE</td><td class="mono num">0</td><td>Set to <code>0.3</code> to watch retries, <code>last_error</code>, and recovery under a flaky provider.</td></tr>
+        <tr><td class="mono">RAILS_MAX_THREADS</td><td class="mono num">5</td><td>Puma threads and database pool size.</td></tr>
+        <tr><td class="mono">CORS_ORIGINS</td><td class="mono">localhost:5173</td><td>Comma-separated allowed origins.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="tested">
+  <div class="sec-head"><span class="sec-num">09</span><h2>How it is tested</h2></div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Layer</th><th>What it pins down</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">test/models/</td><td>That the <em>database</em> rejects duplicate keys even though the model considers the record valid — the test asserts the deliberate omission, so nobody "fixes" it later.</td></tr>
+        <tr><td class="mono">test/jobs/process_purchase_job_test.rb</td><td>Queued→processed happy path; an already-processed purchase is not reprocessed; a simulated failure reverts to queued with the error recorded and a retry scheduled.</td></tr>
+        <tr><td class="mono">test/jobs/outbox_dispatch_job_test.rb</td><td>Publishing enqueues processing; an unknown event type is recorded without raising; <strong>concurrent dispatchers do not double-claim</strong>.</td></tr>
+        <tr><td class="mono">test/jobs/reconcile_stuck_purchases_job_test.rb</td><td>Stale processing rows are reset and redriven; recently-started ones are left alone.</td></tr>
+        <tr><td class="mono">test/integration/purchase_lifecycle_test.rb</td><td>HTTP intake through processing to the status the API reports; a burst enqueues work without running any of it inline.</td></tr>
+        <tr><td class="mono">dashboard/src/App.test.tsx</td><td>Submission uses the entered idempotency key; a purchase visibly transitions as the UI polls; the table never renders more rows than the page size, and "Load more" fetches the next page.</td></tr>
+        <tr><td class="mono">loadtest/</td><td>The concurrency properties, observed against live processes rather than asserted in theory.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="col">
+    CI runs five parallel jobs on every push and pull request: Brakeman plus
+    bundler-audit, RuboCop, the Rails suite against real Postgres and Valkey
+    service containers, the dashboard's full lint-typecheck-build-test chain, and
+    a format-and-typecheck pass over the load scripts. The Valkey container is
+    there on purpose — without it the rate limiter fails open and is never
+    actually exercised.
+  </p>
+</section>
+
+<!-- 10 -->
+<section id="benefits">
+  <div class="sec-head"><span class="sec-num">10</span><h2>What you get from building it this way</h2></div>
+
+  <div class="cards">
+    <div class="card">
+      <span class="tag ok">Latency</span>
+      <h3>Intake latency is flat under load</h3>
+      <p>The endpoint does two inserts and returns. A 10× traffic spike changes
+      the size of the queue, not the response time.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Money</span>
+      <h3>Retries are free</h3>
+      <p>A client can retry the same key indefinitely and get the same purchase
+      back. That removes the single most expensive class of bug in payments.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Durability</span>
+      <h3>Nothing accepted is ever silently dropped</h3>
+      <p>Work is recorded and scheduled in the same commit, and anything abandoned
+      mid-flight is swept back into the queue within 30 seconds.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Blast radius</span>
+      <h3>The provider is protected from your traffic</h3>
+      <p>Downstream concurrency is a number you set. A surge cannot turn into a
+      thundering herd against a third party.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Scaling</span>
+      <h3>Two tiers scale on two different signals</h3>
+      <p>Web scales on request rate; workers scale on backlog depth and age. Both
+      signals are already exposed by <code>/metrics</code>.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Operations</span>
+      <h3>The backlog is queryable</h3>
+      <p>It is a Postgres table. "What is stuck, since when, with what error" is a
+      SQL question, not a log-scraping exercise.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Portability</span>
+      <h3>Moving to AWS changes no application code</h3>
+      <p>Every guarantee is a Postgres primitive, so there is no in-process state
+      to make sticky and no coordinator to add — only environment variables and
+      task definitions.</p>
+    </div>
+    <div class="card">
+      <span class="tag ok">Simplicity</span>
+      <h3>One fewer service to operate</h3>
+      <p>Solid Queue means no separate broker. Postgres was already a hard
+      dependency; the queue rides along in its own database.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="gaps">
+  <div class="sec-head"><span class="sec-num">11</span><h2>What it does <em>not</em> solve</h2></div>
+
+  <p class="col lede">
+    Read this section before presenting the system to anyone. Every item here is a
+    real gap in the code as it stands, not a hypothetical. Knowing them is the
+    difference between demonstrating a design and overselling one.
+  </p>
+
+  <div class="gap">
+    <div class="gap-head"><h3>Exactly-once charging is not achieved — and cannot be, here</h3><span class="tag bad">Correctness</span></div>
+    <p>The guard against double work is <code>return if purchase.processed?</code>,
+    which reads the status <em>we</em> wrote. If a worker dies after the provider
+    accepted the charge but before the row is updated, the purchase is redriven
+    and charged again. Delivery is at-least-once; true idempotency has to be
+    enforced by the provider, by sending it an idempotency key of its own and
+    trusting its dedupe.</p>
+    <p class="why">Not visible in a demo, because the provider is simulated and has no ledger.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>Retry exhaustion has no terminal state</h3><span class="tag bad">Correctness</span></div>
+    <p>After 5 failed attempts the job is discarded. The purchase is left in
+    <code>queued</code> with a <code>last_error</code>, and nothing ever picks it
+    up again — the reconciler only redrives rows stuck in <code>processing</code>.
+    The <code>failed</code> status exists in the enum and is reported by
+    <code>/metrics</code>, but <strong>no code path ever sets it</strong>, so that
+    gauge is permanently zero.</p>
+    <p class="why">Fix: a dead-letter transition on retry exhaustion, plus an alert on it.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>A poison outbox event retries forever</h3><span class="tag warn">Correctness</span></div>
+    <p>An event the dispatcher cannot publish — an unknown <code>event_type</code>,
+    say — has its error recorded but <code>published_at</code> left null, so it is
+    reclaimed on the next tick. Every second. Indefinitely. There is no attempt
+    ceiling and no quarantine, so one bad row becomes a permanent log fire and
+    permanently inflates the pending-backlog gauge that drives autoscaling.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>The stuck-work threshold is a fixed two minutes</h3><span class="tag warn">Correctness</span></div>
+    <p>Any purchase legitimately in flight for longer than two minutes will be
+    redriven as if abandoned. The concurrency limit and the processed-check make
+    that mostly harmless, but it is a hardcoded assumption about provider latency
+    rather than a derived one.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>There is no authentication or authorisation at all</h3><span class="tag bad">Security</span></div>
+    <p>Anyone who can reach the API can create purchases, list every purchase in
+    the system, and read the metrics. No API keys, no tenancy, no scoping of the
+    list endpoint to a customer. The listing endpoint alone is a data-exposure
+    problem the moment it is not on localhost.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>Rate limiting is weaker than it looks</h3><span class="tag warn">Security</span></div>
+    <p>It is a fixed 10-second window, so a caller can send 2× the limit across a
+    window boundary. It keys on <code>request.remote_ip</code>, which behind a load
+    balancer is only as trustworthy as the proxy configuration. It is per-IP, so a
+    distributed client is unaffected and a shared NAT is punished. And it fails
+    open — the right call for availability, but it means the limiter is absent
+    exactly when Redis is having a bad day.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>No client can look up its own purchase</h3><span class="tag warn">Product</span></div>
+    <p>The routes are <code>index</code> and <code>create</code> only. There is no
+    <code>GET /purchase_requests/:id</code> and no lookup by idempotency key, so a
+    client that got a 202 has no supported way to ask "what happened to it?"
+    other than paging the global list. There are also no callbacks or webhooks
+    back to the caller, no cancellation, and no refunds.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>The read path will not scale with the write path</h3><span class="tag warn">Performance</span></div>
+    <p><code>/metrics</code> runs five <code>COUNT(*)</code> queries per call and
+    the dashboard polls it once a second per open tab. The listing uses
+    <code>OFFSET</code> pagination, which degrades on deep pages, and the dashboard
+    re-fetches <em>every</em> loaded page on each poll. Fine for a demo with
+    thousands of rows; not fine at millions.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>Observability stops at one JSON endpoint</h3><span class="tag warn">Operations</span></div>
+    <p>There is no metrics export, no tracing, no alerting, and no dashboards
+    beyond the React page. The AWS document describes shipping these gauges to
+    CloudWatch and the alarms to hang off them, but none of that is implemented —
+    and neither is any autoscaling. The scaling story is a written plan, not
+    running infrastructure.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>Nothing here handles money or PII properly yet</h3><span class="tag bad">Compliance</span></div>
+    <p>No card data, no encryption at rest beyond whatever the database provides,
+    no audit trail of who changed what, no PCI scope analysis, no ledger or
+    double-entry accounting. <code>amount_cents</code> is an integer with no
+    currency field, so the system is implicitly single-currency.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>The deployment story is single-region and untested</h3><span class="tag warn">Operations</span></div>
+    <p>The AWS topology is a written mapping, deliberately not Terraform, so no
+    infrastructure has ever been provisioned from it. There is no disaster
+    recovery plan, no multi-region story, and no database migration or backup
+    runbook. The compose stack itself could not be verified in the environment
+    where this was built, because Docker was unavailable there.</p>
+  </div>
+
+  <div class="gap">
+    <div class="gap-head"><h3>Load tests are not part of CI</h3><span class="tag warn">Testing</span></div>
+    <p>The <code>loadtest</code> CI job only formats and typechecks; the scripts
+    need a live stack, so they are run by hand. That means the concurrency
+    properties are demonstrated on demand rather than continuously defended
+    against regression. There is also no browser-level end-to-end test — the
+    dashboard is covered by Vitest with a mocked API, not by a real browser
+    driving a real backend.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="next">
+  <div class="sec-head"><span class="sec-num">12</span><h2>If this went live, in priority order</h2></div>
+
+  <div class="closing">
+    <h3>The first five changes</h3>
+    <ol>
+      <li><strong>Authentication and per-tenant scoping</strong>, plus a
+      <code>GET</code> for a single purchase. Without these the API is not
+      deployable outside a private network.</li>
+      <li><strong>A terminal failure state.</strong> Transition to
+      <code>failed</code> on retry exhaustion, alert on it, and give the outbox a
+      publish-attempt ceiling with quarantine so a poison event stops burning a
+      dispatcher tick every second.</li>
+      <li><strong>Provider-side idempotency.</strong> Send the payment provider its
+      own idempotency key so a crash between charge and status update cannot
+      double-charge.</li>
+      <li><strong>Metrics to CloudWatch and autoscaling policies</strong> — backlog
+      age on the worker service, request rate on the web service — and a dedicated
+      single-task scheduler service so recurring jobs run in exactly one place.</li>
+      <li><strong>Make the read path cheap:</strong> cached or incrementally
+      maintained counters instead of <code>COUNT(*)</code> per poll, and keyset
+      pagination instead of <code>OFFSET</code>.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="pitch">
+  <div class="sec-head"><span class="sec-num">13</span><h2>The two-minute version</h2></div>
+
+  <p class="col">
+    If someone gives you two minutes, say this. Under a holiday surge the
+    dangerous failures are not slowness — they are taking a customer's money twice
+    and returning <code>202</code> for work that then evaporates. SurgeGuard
+    separates accepting work from doing work: intake writes the purchase and an
+    outbox event in a single transaction and returns immediately, so accepted work
+    can never be lost in the gap between the response and the job.
+  </p>
+
+  <p class="col">
+    Duplicates are settled by a unique index rather than an application check,
+    because only the database can adjudicate two simultaneous requests. A
+    dispatcher claims outbox events with <code>FOR UPDATE SKIP LOCKED</code>, so
+    any number of workers can run without double-claiming. Processing runs in a
+    pool of fixed size, so a surge produces a queue rather than a thundering herd
+    against the payment provider. A reconciler redrives anything a dead worker
+    abandoned.
+  </p>
+
+  <p class="col">
+    Then be honest about the edges: delivery is at-least-once, so true
+    exactly-once charging needs the provider's own idempotency; retry exhaustion
+    currently has no terminal state; and there is no authentication yet. Those
+    are the three things to fix first.
+  </p>
+</section>
+
+<footer>
+  SurgeGuard · api/ (Rails 8.1, Ruby 3.4, Solid Queue on PostgreSQL) ·
+  dashboard/ (React 19, Vite, TypeScript) · loadtest/ (tsx) ·
+  docs/aws-architecture.md · docker-compose.yml · .github/workflows/ci.yml
+</footer>
+
+</main>
+</div>

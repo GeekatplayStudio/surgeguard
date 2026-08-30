@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "packageManager": "npm",
+  "testRunner": "vitest",
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/index.html"
+  },
+  "coverageAnalysis": "perTest",
+  "mutate": ["src/game/engine.ts"],
+  "thresholds": {
+    "high": 60,
+    "low": 40,
+    "break": 30
+  },
+  "timeoutMS": 15000,
+  "concurrency": 8,
+  "_comment": "Scoped to engine.ts on purpose: it holds every real rule this demo makes claims about (thread caps, idempotency outcomes, backlog conservation, lunch/rate-limit gating, Vlad's crate accounting, click hit-regions). The file's ~1450-line pixel-art rendering section (sprite maps, colors, shape offsets) is excluded via inline 'Stryker disable all' / 'Stryker restore all' comments around it, not via this config - no unit test asserts on a fill color, so mutating it only produces noise. drawSign()/drawScene() stay mutated: they compute the click hit-regions and draw order that a real bug once broke (see CHANGELOG.md). Thresholds set from a real measured baseline (34.05%, see CHANGELOG.md), not aspiration: break=30 gives ~4 points of run-to-run timeout-noise headroom below that baseline so the job fails on an actual regression, not on variance; low/high are near-term ratchet targets, not claims about where coverage is today. Raise `break` only after a run confirms the higher floor holds."
+}

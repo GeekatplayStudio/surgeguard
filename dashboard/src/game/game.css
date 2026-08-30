@@ -1,0 +1,272 @@
+.tavern {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tavern-hud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 3px solid #4a3320;
+  border-radius: 6px;
+  background: #2e2630;
+  image-rendering: pixelated;
+}
+
+.hud-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.hud-arrow {
+  color: #8a6440;
+  font-size: 10px;
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 58px;
+  padding: 5px 7px;
+  border: 2px solid #4a3320;
+  border-radius: 4px;
+  background: #241e26;
+  font-family: "Press Start 2P", monospace;
+}
+
+.hud-stat strong {
+  font-size: 11px;
+  color: #f0dcb0;
+}
+
+.hud-stat span {
+  font-size: 6px;
+  letter-spacing: 0.04em;
+  color: #9a8a78;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.hud-gold strong {
+  color: #ffd25a;
+}
+.hud-green strong {
+  color: #7bd88a;
+}
+.hud-red strong {
+  color: #ef7a74;
+}
+.hud-orange strong {
+  color: #eda45c;
+}
+.hud-purple strong {
+  color: #b4a8f5;
+}
+
+.hud-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.pixel-btn {
+  padding: 10px 14px;
+  border: 3px solid #4a3320;
+  border-radius: 4px;
+  background: #6b4a2c;
+  color: #f0dcb0;
+  font-family: "Press Start 2P", monospace;
+  font-size: 9px;
+  cursor: pointer;
+  box-shadow: inset 0 -4px 0 #4a3320;
+}
+
+.pixel-btn:hover {
+  background: #7d5836;
+}
+
+.pixel-btn-on {
+  background: #9f3c4c;
+  border-color: #5a2028;
+  box-shadow: inset 0 -4px 0 #5a2028;
+}
+
+.pixel-btn-warn {
+  background: #a8752c;
+  border-color: #5f3f14;
+  box-shadow: inset 0 -4px 0 #5f3f14;
+}
+
+.tavern-frame {
+  position: relative;
+  border: 6px solid #4a3320;
+  border-radius: 8px;
+  background: #2e2630;
+  padding: 6px;
+  overflow-x: auto;
+}
+
+.tavern-canvas {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.tavern-legend {
+  margin: 0;
+  max-width: 900px;
+  color: #637083;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.view-toggle {
+  display: inline-flex;
+  gap: 0;
+  margin-top: 18px;
+  border: 1px solid #cbd1da;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.view-toggle button {
+  border-radius: 0;
+  background: white;
+  color: #151922;
+  border: 0;
+  padding: 10px 18px;
+}
+
+.view-toggle button.active {
+  background: #151922;
+  color: white;
+}
+
+.thread-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 2px solid #4a3320;
+  border-radius: 4px;
+  background: #241e26;
+  font-family: "Press Start 2P", monospace;
+}
+
+.thread-control span {
+  font-size: 7px;
+  color: #9a8a78;
+  text-transform: uppercase;
+}
+
+.thread-control strong {
+  font-size: 11px;
+  color: #ffd25a;
+  min-width: 14px;
+  text-align: center;
+}
+
+.pixel-btn-small {
+  padding: 5px 9px;
+  box-shadow: inset 0 -3px 0 #4a3320;
+}
+
+.pixel-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.tavern-canvas.pointing {
+  cursor: pointer;
+}
+
+.tavern-popup {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  max-width: 430px;
+  padding: 12px 14px;
+  border: 3px solid #4a3320;
+  border-radius: 6px;
+  background: #f4ecd8;
+  color: #2e2418;
+  box-shadow: 4px 4px 0 rgba(20, 14, 20, 0.4);
+}
+
+.tavern-popup header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.tavern-popup h3 {
+  margin: 0;
+  font-family: "Press Start 2P", monospace;
+  font-size: 10px;
+  line-height: 1.5;
+  color: #5a3a1a;
+}
+
+.tavern-popup header button {
+  flex-shrink: 0;
+  padding: 4px 7px;
+  border: 2px solid #4a3320;
+  border-radius: 3px;
+  background: #b5493f;
+  color: #f4ecd8;
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.tavern-popup p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.tavern-popup .popup-why {
+  margin-bottom: 0;
+  color: #6e4a2a;
+}
+
+.hud-react {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding-top: 8px;
+  border-top: 2px solid #4a3320;
+}
+
+.tech-chip {
+  padding: 4px 7px;
+  border: 2px solid #241c26;
+  border-radius: 3px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 7px;
+  color: #f4f0e6;
+  white-space: nowrap;
+}
+
+.tech-react {
+  background: #2a6a7f;
+}
+
+.hud-react-note {
+  font-family: "Press Start 2P", monospace;
+  font-size: 8px;
+  line-height: 1.6;
+  color: #c8b898;
+}

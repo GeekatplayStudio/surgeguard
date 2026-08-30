@@ -25,6 +25,7 @@ produce a queue instead of an outage.
 - [The dashboard](#the-dashboard)
 - [Load scripts](#load-scripts)
 - [Running it](#running-it)
+- [Testing](#testing)
 - [Configuration](#configuration)
 - [Deployment](#deployment)
 
@@ -207,6 +208,17 @@ second one, or change the amount and watch it return `409`. The table is paged
 via "Load more" rather than loading everything, so it stays bounded no matter how
 many purchases exist.
 
+A second view, **"More fun than just a table"** (`/#tavern`), re-stages the same
+system as a pixel-art warehouse: cashiers are the intake endpoint, an inspector
+is the idempotency check, a bounded machine is the worker pool, and a robot that
+lives in a booth and only comes out to work is the reconciler. It runs its own
+deterministic simulation (`dashboard/src/game/engine.ts`) rather than talking to
+the real API, so the same guarantees — bounded concurrency, idempotent retries,
+conserved work — can be watched happening rather than read about. Every clickable
+sign explains, in the real system's terms, what that station does and why; every
+cashier and warehouse worker can be clicked to send them to lunch, closing that
+lane and showing the rate limiter and queue backlog respond to reduced capacity.
+
 ## Load scripts
 
 Three TypeScript scripts in `loadtest/` that drive a *running* stack. They exist
@@ -231,6 +243,18 @@ bursting past `RATE_LIMIT_MAX` trips the limiter, which is correct behaviour
 rather than a failure. Raise it to burst harder.
 
 ## Running it
+
+### One command, natively
+
+```bash
+./start.sh
+```
+
+Checks Postgres/Redis are reachable, runs `bundle install` and `db:prepare` if
+needed, then starts the API, the Solid Queue worker, and the dashboard together
+and stops all three cleanly on Ctrl+C. Requires Ruby 3.4, Node 22, PostgreSQL,
+and Redis already running locally — see [Natively](#natively) below for the
+manual, three-terminal version of the same thing.
 
 ### With Docker (everything at once)
 
@@ -268,6 +292,27 @@ npm run dev                      # http://localhost:5173
 The worker is not optional. Without it, purchases are accepted and durably
 stored but stay `queued` forever, since dispatch and processing both run through
 Solid Queue.
+
+## Testing
+
+```bash
+./run-tests.sh              # api, dashboard (incl. Playwright), loadtest
+./run-tests.sh --load        # + the live load scripts against a running stack
+./run-tests.sh --mutation    # + mutation testing (~15-20 min, so opt-in)
+```
+
+Four layers, each catching a different class of regression:
+
+| Layer | Command | What it catches |
+| --- | --- | --- |
+| Rails unit/integration | `cd api && bin/rails test` | The 9 named scenarios (idempotency storm, conflicting-key reuse, retry safety, durable failure recovery, stuck-record reconcile, concurrent dispatch, bounded backlog, bounded pagination, end-to-end lifecycle) — see [Repository layout](#repository-layout). |
+| Dashboard unit/integration | `cd dashboard && npm test` | Vitest against jsdom and a stubbed canvas context. Covers `App.tsx`'s form/table behaviour and, for the tavern demo's simulation engine, real invariants asserted over tens of thousands of simulated frames: processing never exceeds the configured thread count, accepted work is always accounted for as queued/processing/processed, the reconciler clears *every* stuck box in one sweep rather than one per sweep, lunch breaks close a till and the door cap trips the rate limiter, and Vlad returns every crate he skewers. |
+| Dashboard end-to-end | `cd dashboard && npm run e2e` | Playwright driving a real Chromium against the real dev server. Exists because canvas hit-testing, popup DOM, and click-driven state changes are exactly what a stubbed context in a unit test cannot honestly exercise — writing it is what surfaced a stale hardcoded test-coordinate bug the first time a sign's position changed (see `dashboard/CHANGELOG.md`). |
+| Mutation testing | `cd dashboard && npm run mutation` | Stryker, scoped to the tavern engine's simulation logic (`dashboard/src/game/engine.ts`, with the pure pixel-rendering code excluded via inline `// Stryker disable all` markers — no test asserts on a fill color, so mutating it only produces noise). Measures whether the unit tests above would actually fail if the logic were subtly wrong, not just whether they pass today. |
+
+All four run in CI on every push and pull request (`.github/workflows/ci.yml`:
+`test`, `dashboard`, `mutation` jobs), plus the existing `scan_ruby`/`lint`
+jobs and the `loadtest` format/typecheck job.
 
 ## Configuration
 

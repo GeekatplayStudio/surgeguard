@@ -6,7 +6,11 @@ import tseslint from "typescript-eslint";
 import { globalIgnores } from "eslint/config";
 
 export default tseslint.config([
-  globalIgnores(["dist"]),
+  // .stryker-tmp holds Stryker's own mutation-testing sandboxes (full
+  // project mirrors, one per worker) and reports/ holds its HTML output -
+  // neither is source, and .stryker-tmp's sandboxes even carry their own
+  // tsconfig that collides with this one if ESLint is ever pointed at them.
+  globalIgnores(["dist", ".stryker-tmp", "reports"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [

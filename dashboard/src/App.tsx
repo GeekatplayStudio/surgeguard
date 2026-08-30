@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPurchase, getMetrics, getPurchases } from "./api";
+import TavernGame from "./game/TavernGame";
 import type { Metrics, PurchaseRequest } from "./types";
 import "./App.css";
 const PER_PAGE = 50;
@@ -17,6 +18,9 @@ function App() {
   const [hasMore, setHasMore] = useState(false);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [view, setView] = useState<"dashboard" | "tavern">(() =>
+    window.location.hash.startsWith("#tavern") ? "tavern" : "dashboard",
+  );
   const refresh = useCallback(async () => {
     try {
       const pageRequests = Array.from({ length: loadedPages }, (_, index) =>
@@ -39,6 +43,12 @@ function App() {
     setLoadedPages((current) => current + 1);
   }
   useEffect(() => {
+    // Only poll the real API while the dashboard is the visible view - the
+    // tavern game underneath stays mounted (so its own form state and the
+    // dashboard's form fields both survive switching back and forth), but
+    // there is no reason to keep hitting /metrics and /purchase_requests
+    // once a second for a view nobody is looking at.
+    if (view !== "dashboard") return;
     void refresh();
     const timer = window.setInterval(() => {
       void refresh();
@@ -46,7 +56,7 @@ function App() {
     return () => {
       window.clearInterval(timer);
     };
-  }, [refresh]);
+  }, [refresh, view]);
   async function submitPurchase() {
     const amountNumber = Number.parseFloat(amount);
     if (Number.isNaN(amountNumber) || amountNumber <= 0) {
@@ -85,118 +95,137 @@ function App() {
             Durable intake, controlled concurrency, idempotent processing, and
             queue recovery.
           </p>
+          <div className="view-toggle">
+            <button
+              type="button"
+              className={view === "dashboard" ? "active" : ""}
+              onClick={() => setView("dashboard")}
+            >
+              Dashboard
+            </button>
+            <button
+              type="button"
+              className={view === "tavern" ? "active" : ""}
+              onClick={() => setView("tavern")}
+            >
+              More fun than just a table
+            </button>
+          </div>
         </div>
       </header>
-      <section className="metrics-grid">
-        <MetricCard label="Total" value={metrics?.purchases.total ?? 0} />
-        <MetricCard label="Queued" value={metrics?.purchases.queued ?? 0} />
-        <MetricCard
-          label="Processing"
-          value={metrics?.purchases.processing ?? 0}
-        />
-        <MetricCard
-          label="Processed"
-          value={metrics?.purchases.processed ?? 0}
-        />
-        <MetricCard
-          label="Outbox backlog"
-          value={metrics?.outbox.pending ?? 0}
-        />
-        <MetricCard
-          label="Oldest backlog"
-          value={`${metrics?.outbox.oldest_age_seconds ?? 0} sec`}
-        />
-      </section>
-      <section className="panel">
-        <h2>Create purchase</h2>
-        <div className="form-grid">
-          <label>
-            Customer
-            <input
-              value={customerRef}
-              onChange={(event) => setCustomerRef(event.target.value)}
-            />
-          </label>
-          <label>
-            Amount
-            <input
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
-            />
-          </label>
-          <label className="wide">
-            Idempotency key
-            <input
-              value={idempotencyKey}
-              onChange={(event) => setIdempotencyKey(event.target.value)}
-            />
-          </label>
-        </div>
-        <div className="button-row">
-          <button
-            type="button"
-            disabled={submitting}
-            onClick={() => {
-              void submitPurchase();
-            }}
-          >
-            {submitting ? "Submitting..." : "Submit purchase"}
-          </button>
-          <button
-            type="button"
-            className="secondary"
-            onClick={() => setIdempotencyKey(newIdempotencyKey())}
-          >
-            New idempotency key
-          </button>
-        </div>
-        {message && <p className="message">{message}</p>}
-      </section>
-      <section className="panel">
-        <div className="table-header">
-          <h2>Latest purchases</h2>
-          <span>
-            Showing {purchases.length} of {total}
-          </span>
-        </div>
-        <div className="table-wrapper">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Attempts</th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchases.map((purchase) => (
-                <tr key={purchase.id}>
-                  <td>{purchase.id}</td>
-                  <td>{purchase.customer_ref}</td>
-                  <td>${purchase.amount_dollars.toFixed(2)}</td>
-                  <td>
-                    <StatusBadge status={purchase.status} />
-                  </td>
-                  <td>{purchase.attempt_count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {hasMore && (
+      {view === "tavern" && <TavernGame />}
+      <div hidden={view !== "dashboard"}>
+        <section className="metrics-grid">
+          <MetricCard label="Total" value={metrics?.purchases.total ?? 0} />
+          <MetricCard label="Queued" value={metrics?.purchases.queued ?? 0} />
+          <MetricCard
+            label="Processing"
+            value={metrics?.purchases.processing ?? 0}
+          />
+          <MetricCard
+            label="Processed"
+            value={metrics?.purchases.processed ?? 0}
+          />
+          <MetricCard
+            label="Outbox backlog"
+            value={metrics?.outbox.pending ?? 0}
+          />
+          <MetricCard
+            label="Oldest backlog"
+            value={`${metrics?.outbox.oldest_age_seconds ?? 0} sec`}
+          />
+        </section>
+        <section className="panel">
+          <h2>Create purchase</h2>
+          <div className="form-grid">
+            <label>
+              Customer
+              <input
+                value={customerRef}
+                onChange={(event) => setCustomerRef(event.target.value)}
+              />
+            </label>
+            <label>
+              Amount
+              <input
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+              />
+            </label>
+            <label className="wide">
+              Idempotency key
+              <input
+                value={idempotencyKey}
+                onChange={(event) => setIdempotencyKey(event.target.value)}
+              />
+            </label>
+          </div>
           <div className="button-row">
             <button
               type="button"
-              className="secondary"
-              onClick={loadMorePurchases}
+              disabled={submitting}
+              onClick={() => {
+                void submitPurchase();
+              }}
             >
-              Load more
+              {submitting ? "Submitting..." : "Submit purchase"}
+            </button>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setIdempotencyKey(newIdempotencyKey())}
+            >
+              New idempotency key
             </button>
           </div>
-        )}
-      </section>
+          {message && <p className="message">{message}</p>}
+        </section>
+        <section className="panel">
+          <div className="table-header">
+            <h2>Latest purchases</h2>
+            <span>
+              Showing {purchases.length} of {total}
+            </span>
+          </div>
+          <div className="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Attempts</th>
+                </tr>
+              </thead>
+              <tbody>
+                {purchases.map((purchase) => (
+                  <tr key={purchase.id}>
+                    <td>{purchase.id}</td>
+                    <td>{purchase.customer_ref}</td>
+                    <td>${purchase.amount_dollars.toFixed(2)}</td>
+                    <td>
+                      <StatusBadge status={purchase.status} />
+                    </td>
+                    <td>{purchase.attempt_count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {hasMore && (
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary"
+                onClick={loadMorePurchases}
+              >
+                Load more
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
     </main>
   );
 }
